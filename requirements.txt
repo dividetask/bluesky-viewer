@@ -1,0 +1,5 @@
+# Bluesky Terminal Viewer Dependencies
+# For terminal UI and formatting
+rich>=13.7.0
+# For handling dates
+python-dateutil>=2.8.2
