@@ -93,17 +93,16 @@ python3 main.py
 
 ### Browsing Bluesky Posts
 
-**Note:** Browsing requires a Bluesky account. Don't have one? Create a free account at https://bsky.app
-
 When you select option 3, the viewer will:
-1. Prompt you to login with your Bluesky handle and password
-2. Fetch up to 20 popular posts from Bluesky's "What's Hot" feed
-3. Display each post with author info and content
-4. Ask if you want to add the post to your database
-5. Automatically add the author if they're not already tracked
-6. Continue to the next post or stop browsing
+1. Attempt to browse posts without requiring login
+2. If authentication is needed, prompt you to login with your Bluesky handle and password
+3. Fetch up to 20 popular posts from Bluesky's "What's Hot" feed
+4. Display each post with author info and content
+5. Ask if you want to add the post to your database
+6. Automatically add the author if they're not already tracked
+7. Continue to the next post or stop browsing
 
-Your credentials are only used for the session and are not stored.
+**Note:** The Bluesky API may require authentication. If you need to login, your credentials are only used for the session and are not stored. Don't have an account? Create a free one at https://bsky.app
 
 ## Database File Format
 
@@ -157,7 +156,7 @@ The codebase is organized into clear modules:
 
 ### How It Works
 
-The Bluesky browsing feature uses the AT Protocol (atproto) library to fetch posts from Bluesky's "What's Hot" feed. Authentication is required to access the Bluesky API - you'll need to login with your Bluesky account. Your credentials are only used during the session and are never stored. When you add a post, both the post and the author are automatically saved to your local database for future reference.
+The Bluesky browsing feature uses the AT Protocol (atproto) library to fetch posts from Bluesky's "What's Hot" feed. The viewer first attempts to browse without authentication. If the API requires login, you'll be prompted to enter your credentials, which are only used during the session and are never stored. When you add a post, both the post and the author are automatically saved to your local database for future reference.
 
 ## License
 
