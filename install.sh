@@ -7,12 +7,30 @@ set -e  # Exit on any error
 echo "Installing Bluesky Terminal Viewer..."
 echo
 
+# Find an available Python 3 version
+PYTHON=""
+for version in python3.11 python3.10 python3.9 python3.8 python3; do
+    if command -v "$version" &> /dev/null; then
+        PYTHON="$version"
+        break
+    fi
+done
+
+if [ -z "$PYTHON" ]; then
+    echo "Error: No Python 3 installation found!"
+    echo "Please install Python 3.7 or higher."
+    exit 1
+fi
+
+echo "Using: $PYTHON ($($PYTHON --version))"
+echo
+
 # Check if venv exists
 if [ -d "venv" ]; then
     echo "Virtual environment already exists."
 else
     echo "Creating virtual environment..."
-    python3.11 -m venv venv --without-pip
+    $PYTHON -m venv venv --without-pip
 
     # Manually install pip in the venv using ensurepip
     echo "Bootstrapping pip..."
