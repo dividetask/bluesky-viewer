@@ -32,12 +32,31 @@ else
     echo "Creating virtual environment..."
     $PYTHON -m venv venv --without-pip
 
-    # Manually install pip in the venv using ensurepip
+    # Try to install pip using ensurepip
     echo "Bootstrapping pip..."
-    venv/bin/python3 -m ensurepip --upgrade
+    if venv/bin/python3 -m ensurepip --upgrade 2>/dev/null; then
+        echo "✓ pip installed via ensurepip"
+    else
+        echo "ensurepip not available, downloading pip installer..."
+        # Download get-pip.py
+        if command -v curl &> /dev/null; then
+            curl -s https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+        elif command -v wget &> /dev/null; then
+            wget -q https://bootstrap.pypa.io/get-pip.py
+        else
+            echo "Error: Neither curl nor wget is available to download pip."
+            echo "Please install curl or wget, or install python3-pip manually."
+            exit 1
+        fi
+
+        echo "Installing pip..."
+        venv/bin/python3 get-pip.py
+        rm get-pip.py
+        echo "✓ pip installed"
+    fi
 fi
 
-echo "Installing dependencies..."
+echo "Upgrading pip and installing dependencies..."
 venv/bin/python3 -m pip install --upgrade pip setuptools wheel
 venv/bin/python3 -m pip install -r requirements.txt
 
