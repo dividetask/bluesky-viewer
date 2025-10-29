@@ -35,36 +35,36 @@ git clone <repository-url>
 cd bluesky-viewer
 ```
 
-2. Install dependencies:
+2. Run the installation script:
 ```bash
-pip3 install -r requirements.txt
-# Or if pip is already Python 3:
-pip install -r requirements.txt
+./install.sh
 ```
+
+This creates a virtual environment and installs all dependencies automatically.
 
 ## Usage
 
 ### Basic Usage
 
-Run the viewer with default settings:
+Run the viewer:
 ```bash
+./run.sh
+```
+
+The script automatically uses the virtual environment, so you don't need to activate it manually.
+
+**Alternative:** If you prefer to manage the virtual environment yourself:
+```bash
+source venv/bin/activate
 python3 main.py
+deactivate  # when done
 ```
-
-Or make it executable and run directly:
-```bash
-chmod +x main.py
-./main.py
-```
-
-**Important:** If you see a syntax error, make sure you're using Python 3:
-- Use `python3` NOT `python` (if your system has Python 2.7 as default)
 
 ### Custom Database Path
 
 Specify a custom database file:
 ```bash
-python3 main.py --db /path/to/custom_database.json
+./run.sh --db /path/to/custom_database.json
 ```
 
 ### Interactive Menu
@@ -80,7 +80,7 @@ Once running, you'll see an interactive menu with the following options:
 
 ```bash
 # Start the viewer
-python3 main.py
+./run.sh
 
 # Select option 3 to browse posts from Bluesky
 # The viewer will fetch top posts and display them one by one

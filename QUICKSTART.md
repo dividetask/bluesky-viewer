@@ -11,49 +11,52 @@ python3 --version
 
 ## Installation
 
-1. **Install dependencies:**
+**Easy installation** (handles broken pip automatically):
 
-   **Easy way** (recommended):
-   ```bash
-   ./install.sh
-   ```
-
-   **Or manually:**
-   ```bash
-   python3 -m pip install -r requirements.txt --user
-   ```
-
-   **If you have a working pip3:**
-   ```bash
-   pip3 install -r requirements.txt
-   ```
-
-   **Note:** If `pip3` gives you errors about OpenSSL or AttributeError, use `python3 -m pip` instead. This is a common issue on some systems.
-
-2. **Run the example script** to see it in action:
-   ```bash
-   python3 example.py
-   ```
-
-3. **Start the interactive viewer:**
-   ```bash
-   python3 main.py
-   ```
-
-   Or use the example data:
-   ```bash
-   python3 main.py --db example_data.json
-   ```
-
-**Alternative:** Make the script executable:
 ```bash
-chmod +x main.py
-./main.py
+./install.sh
 ```
+
+This creates a virtual environment and installs all dependencies. It works even if your system's pip is broken!
+
+**After installation, run the viewer:**
+
+```bash
+./run.sh
+```
+
+---
+
+<details>
+<summary>Alternative: Manual installation (click to expand)</summary>
+
+If you prefer to install manually or the script doesn't work:
+
+```bash
+# Create virtual environment
+python3.11 -m venv venv --without-pip
+
+# Bootstrap pip in the venv
+venv/bin/python3 -m ensurepip --upgrade
+
+# Install dependencies
+venv/bin/python3 -m pip install -r requirements.txt
+
+# Run the viewer
+venv/bin/python3 main.py
+```
+
+</details>
 
 ## First Steps
 
-Once the viewer is running, try these options:
+Once installed, start the viewer:
+
+```bash
+./run.sh
+```
+
+Try these options:
 
 1. **Option 3** - Browse Top Posts from Bluesky (Start here!)
 2. **Option 1** - View all saved users
