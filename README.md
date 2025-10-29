@@ -93,12 +93,17 @@ python3 main.py
 
 ### Browsing Bluesky Posts
 
+**Note:** Browsing requires a Bluesky account. Don't have one? Create a free account at https://bsky.app
+
 When you select option 3, the viewer will:
-1. Fetch up to 20 popular posts from Bluesky
-2. Display each post with author info and content
-3. Ask if you want to add the post to your database
-4. Automatically add the author if they're not already tracked
-5. Continue to the next post or stop browsing
+1. Prompt you to login with your Bluesky handle and password
+2. Fetch up to 20 popular posts from Bluesky's "What's Hot" feed
+3. Display each post with author info and content
+4. Ask if you want to add the post to your database
+5. Automatically add the author if they're not already tracked
+6. Continue to the next post or stop browsing
+
+Your credentials are only used for the session and are not stored.
 
 ## Database File Format
 
@@ -152,7 +157,7 @@ The codebase is organized into clear modules:
 
 ### How It Works
 
-The Bluesky browsing feature uses the AT Protocol (atproto) library to fetch posts from Bluesky's public timeline. No authentication is required to browse public posts. When you add a post, both the post and the author are automatically saved to your local database for future reference.
+The Bluesky browsing feature uses the AT Protocol (atproto) library to fetch posts from Bluesky's "What's Hot" feed. Authentication is required to access the Bluesky API - you'll need to login with your Bluesky account. Your credentials are only used during the session and are never stored. When you add a post, both the post and the author are automatically saved to your local database for future reference.
 
 ## License
 
