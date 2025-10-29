@@ -1,14 +1,13 @@
 # Bluesky Terminal Viewer
 
-A simple, interactive terminal-based viewer for managing Bluesky users and posts with a local JSON database.
+A simple, interactive terminal-based viewer for discovering and tracking Bluesky posts and users with a local JSON database.
 
 ## Features
 
-- **Local JSON Database**: All data stored in a simple, human-readable JSON file
-- **User Management**: Add, view, update, and delete users with associated scores
-- **Post Management**: Add, view, update, and delete posts with links and scores
+- **Browse Bluesky Posts**: Discover top posts directly from Bluesky's public feed
+- **Local JSON Database**: Track interesting posts and users in a simple, human-readable JSON file
 - **Interactive Terminal UI**: Beautiful, colorful interface powered by Rich library
-- **Sorting & Filtering**: View top users and posts by score, filter posts by user
+- **Add Posts While Browsing**: Save posts and users to your database as you discover them
 - **Persistent Storage**: All changes automatically saved to disk
 
 ## Database Structure
@@ -72,18 +71,10 @@ python3 main.py --db /path/to/custom_database.json
 
 Once running, you'll see an interactive menu with the following options:
 
-1. **View All Users** - Display all users in a table
-2. **View All Posts** - Display all posts in a table
-3. **View Top Users** - Display top N users by score
-4. **View Top Posts** - Display top N posts by score
-5. **View Posts by User** - Filter posts by a specific username
-6. **Add User** - Add a new user with username and score
-7. **Add Post** - Add a new post with link, username, and score
-8. **Update User Score** - Modify a user's score
-9. **Update Post Score** - Modify a post's score
-10. **Delete User** - Remove a user from the database
-11. **Delete Post** - Remove a post from the database
-12. **Exit** - Quit the application
+1. **View All Users** - Display all tracked users in a table
+2. **View All Posts** - Display all saved posts in a table
+3. **Browse Top Posts from Bluesky** - Discover new posts from Bluesky's public feed
+4. **Exit** - Quit the application
 
 ## Example Workflow
 
@@ -91,18 +82,23 @@ Once running, you'll see an interactive menu with the following options:
 # Start the viewer
 python3 main.py
 
-# Select option 6 to add a user
-# Enter username: alice.bsky.social
-# Enter score: 100
+# Select option 3 to browse posts from Bluesky
+# The viewer will fetch top posts and display them one by one
+# You'll see the author, post content, and URL for each post
+# Choose whether to add interesting posts to your database
 
-# Select option 7 to add a post
-# Enter link: https://bsky.app/profile/alice.bsky.social/post/123
-# Enter username: alice.bsky.social
-# Enter score: 50
-
-# Select option 1 to view all users
-# Select option 2 to view all posts
+# Select option 1 to view all saved users
+# Select option 2 to view all saved posts
 ```
+
+### Browsing Bluesky Posts
+
+When you select option 3, the viewer will:
+1. Fetch up to 20 popular posts from Bluesky
+2. Display each post with author info and content
+3. Ask if you want to add the post to your database
+4. Automatically add the author if they're not already tracked
+5. Continue to the next post or stop browsing
 
 ## Database File Format
 
@@ -142,6 +138,7 @@ bluesky-viewer/
 
 - **rich** (>= 13.7.0): Terminal formatting and UI components
 - **python-dateutil** (>= 2.8.2): Date handling utilities
+- **atproto** (>= 0.0.55): Bluesky API client library
 
 
 ## Development
@@ -150,8 +147,12 @@ The codebase is organized into clear modules:
 
 - `database.py`: Handles all database operations (CRUD for users and posts)
 - `models.py`: Defines data structures for User and Post
-- `viewer.py`: Implements the terminal UI and interactive functionality
+- `viewer.py`: Implements the terminal UI, interactive menu, and Bluesky API integration
 - `main.py`: Entry point with command-line argument parsing
+
+### How It Works
+
+The Bluesky browsing feature uses the AT Protocol (atproto) library to fetch posts from Bluesky's public timeline. No authentication is required to browse public posts. When you add a post, both the post and the author are automatically saved to your local database for future reference.
 
 ## License
 

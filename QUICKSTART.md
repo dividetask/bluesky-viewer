@@ -46,27 +46,23 @@ chmod +x main.py
 
 Once the viewer is running, try these options:
 
-1. **Option 1** - View all users
-2. **Option 2** - View all posts
-3. **Option 6** - Add a new user
-4. **Option 7** - Add a new post
+1. **Option 3** - Browse Top Posts from Bluesky (Start here!)
+2. **Option 1** - View all saved users
+3. **Option 2** - View all saved posts
 
 ## Example Usage
 
-Add a user:
-- Choose option 6
-- Enter username: `john.bsky.social`
-- Enter score: `100`
-
-Add a post:
-- Choose option 7
-- Enter link: `https://bsky.app/profile/john.bsky.social/post/abc123`
-- Enter username: `john.bsky.social`
-- Enter score: `50`
-
-View top users:
+Browse Bluesky posts:
 - Choose option 3
-- Enter how many to display: `5`
+- The viewer will fetch popular posts from Bluesky
+- Read through posts and their authors
+- When you find an interesting post, answer "yes" to add it to your database
+- The author will be automatically added to your user list
+- Continue browsing or press "no" to stop
+
+View your saved data:
+- Choose option 1 to see all users you've tracked
+- Choose option 2 to see all posts you've saved
 
 ## Troubleshooting
 
@@ -76,9 +72,14 @@ View top users:
 - Check your version: `python3 --version` (should be 3.7+)
 - Your system's `python` command points to Python 2.7
 
-**"ModuleNotFoundError: No module named 'rich'"**
+**"ModuleNotFoundError: No module named 'rich'" or "No module named 'atproto'"**
 - Run: `pip3 install -r requirements.txt`
 - Or: `pip install -r requirements.txt` (if pip is Python 3)
+- This installs all required dependencies including rich, atproto, and others
+
+**"ModuleNotFoundError: No module named '_cffi_backend'"**
+- Run: `pip3 install --ignore-installed cffi`
+- This fixes a dependency issue with the cryptography library
 
 **How to check which Python you're using:**
 ```bash
