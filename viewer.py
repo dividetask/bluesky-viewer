@@ -79,110 +79,131 @@ class BlueskyViewer:
     def browse_bluesky_posts(self) -> None:
         """Browse top posts from Bluesky and add them to the database"""
         self.console.print("\n[bold cyan]Browse Posts from Bluesky[/bold cyan]\n")
-        self.console.print("[yellow]Note: This feature requires a Bluesky account to access the API.[/yellow]")
-        self.console.print("[dim]Your credentials are only used for this session and are not stored.[/dim]\n")
+        self.console.print("[cyan]Attempting to fetch posts...[/cyan]")
 
-        # Ask if user wants to login
-        do_login = Confirm.ask("Do you have a Bluesky account and want to login?", default=True)
+        client = Client()
+        needs_auth = False
 
-        if not do_login:
-            self.console.print("\n[yellow]Browsing requires authentication.[/yellow]")
-            self.console.print("[dim]You can create a free account at https://bsky.app[/dim]")
-            return
-
-        # Get login credentials
-        handle = Prompt.ask("Enter your Bluesky handle (e.g., username.bsky.social)")
-        password = Prompt.ask("Enter your password", password=True)
-
-        self.console.print("\n[cyan]Connecting to Bluesky...[/cyan]")
-
+        # Try to browse without authentication first
         try:
-            client = Client()
-            client.login(handle, password)
-            self.console.print("[green]✓ Logged in successfully![/green]\n")
-
             # Use a popular feed generator URI for discovering posts
-            # This is the "What's Hot" feed that shows trending posts
             feed_uri = "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot"
 
-            self.console.print("[cyan]Fetching top posts...[/cyan]")
-
-            # Get posts from the feed
             response = client.app.bsky.feed.get_feed(params={'feed': feed_uri, 'limit': 20})
 
-            if not response.feed:
-                self.console.print("[yellow]No posts found.[/yellow]")
-                return
-
-            # Display posts
-            self.console.print(f"\n[bold green]Found {len(response.feed)} posts[/bold green]\n")
-
-            for idx, feed_view in enumerate(response.feed, 1):
-                post = feed_view.post
-                author = post.author
-
-                # Extract post data
-                username = author.handle
-                display_name = author.display_name or username
-                post_text = post.record.text if hasattr(post.record, 'text') else ""
-                post_uri = post.uri
-
-                # Convert AT URI to web URL
-                # Format: at://did:plc:xxx/app.bsky.feed.post/yyy
-                parts = post_uri.split('/')
-                if len(parts) >= 4:
-                    post_id = parts[-1]
-                    post_url = f"https://bsky.app/profile/{username}/post/{post_id}"
-                else:
-                    post_url = post_uri
-
-                # Create a nice display box for each post
-                post_info = Text()
-                post_info.append(f"#{idx} ", style="bold yellow")
-                post_info.append(f"{display_name}", style="bold cyan")
-                post_info.append(f" (@{username})\n", style="cyan")
-                post_info.append(f"{post_text[:200]}", style="white")
-                if len(post_text) > 200:
-                    post_info.append("...", style="dim")
-                post_info.append(f"\n\n{post_url}", style="blue underline")
-
-                self.console.print(Panel(post_info, border_style="green", padding=(1, 2)))
-
-                # Ask if user wants to add this post
-                add = Confirm.ask("Add this post to your database?", default=False)
-
-                if add:
-                    # Check if user exists, if not add them
-                    if not self.db.get_user(username):
-                        self.db.add_user(username, score=0)
-                        self.console.print(f"[green]✓ Added user: {username}[/green]")
-
-                    # Add the post
-                    if self.db.add_post(post_url, username, score=0):
-                        self.console.print(f"[green]✓ Post added to database![/green]")
-                    else:
-                        self.console.print(f"[yellow]Post already in database.[/yellow]")
-
-                self.console.print()
-
-                # Ask if they want to continue browsing
-                if idx < len(response.feed):
-                    continue_browsing = Confirm.ask("Continue browsing?", default=True)
-                    if not continue_browsing:
-                        break
-
-            self.console.print("[bold cyan]Done browsing![/bold cyan]")
+            if response.feed:
+                self.console.print("[green]✓ Connected successfully (no login required)![/green]\n")
+            else:
+                needs_auth = True
 
         except Exception as e:
             error_msg = str(e)
-            self.console.print(f"\n[red]Error: {error_msg}[/red]")
-
-            if "401" in error_msg or "authentication" in error_msg.lower():
-                self.console.print("[yellow]Invalid credentials. Please check your handle and password.[/yellow]")
-            elif "403" in error_msg:
-                self.console.print("[yellow]Access denied. The API might have restrictions.[/yellow]")
+            # Check if error is authentication-related
+            if "401" in error_msg or "403" in error_msg or "authentication" in error_msg.lower():
+                needs_auth = True
             else:
+                self.console.print(f"[red]Error: {error_msg}[/red]")
                 self.console.print("[yellow]Could not connect to Bluesky. Please try again later.[/yellow]")
+                return
+
+        # If authentication is needed, prompt for login
+        if needs_auth:
+            self.console.print("\n[yellow]Bluesky API requires authentication.[/yellow]")
+            self.console.print("[dim]Your credentials are only used for this session and are not stored.[/dim]\n")
+
+            do_login = Confirm.ask("Login with your Bluesky account?", default=True)
+
+            if not do_login:
+                self.console.print("\n[yellow]Cannot browse without authentication.[/yellow]")
+                self.console.print("[dim]You can create a free account at https://bsky.app[/dim]")
+                return
+
+            # Get login credentials
+            handle = Prompt.ask("Enter your Bluesky handle (e.g., username.bsky.social)")
+            password = Prompt.ask("Enter your password", password=True)
+
+            self.console.print("\n[cyan]Logging in...[/cyan]")
+
+            try:
+                client = Client()
+                client.login(handle, password)
+                self.console.print("[green]✓ Logged in successfully![/green]\n")
+
+                # Fetch posts after authentication
+                self.console.print("[cyan]Fetching top posts...[/cyan]")
+                response = client.app.bsky.feed.get_feed(params={'feed': feed_uri, 'limit': 20})
+
+            except Exception as e:
+                error_msg = str(e)
+                self.console.print(f"\n[red]Error: {error_msg}[/red]")
+
+                if "401" in error_msg or "authentication" in error_msg.lower():
+                    self.console.print("[yellow]Invalid credentials. Please check your handle and password.[/yellow]")
+                else:
+                    self.console.print("[yellow]Could not connect to Bluesky. Please try again later.[/yellow]")
+                return
+
+        # Display the posts
+        if not response.feed:
+            self.console.print("[yellow]No posts found.[/yellow]")
+            return
+
+        self.console.print(f"\n[bold green]Found {len(response.feed)} posts[/bold green]\n")
+
+        for idx, feed_view in enumerate(response.feed, 1):
+            post = feed_view.post
+            author = post.author
+
+            # Extract post data
+            username = author.handle
+            display_name = author.display_name or username
+            post_text = post.record.text if hasattr(post.record, 'text') else ""
+            post_uri = post.uri
+
+            # Convert AT URI to web URL
+            parts = post_uri.split('/')
+            if len(parts) >= 4:
+                post_id = parts[-1]
+                post_url = f"https://bsky.app/profile/{username}/post/{post_id}"
+            else:
+                post_url = post_uri
+
+            # Create a nice display box for each post
+            post_info = Text()
+            post_info.append(f"#{idx} ", style="bold yellow")
+            post_info.append(f"{display_name}", style="bold cyan")
+            post_info.append(f" (@{username})\n", style="cyan")
+            post_info.append(f"{post_text[:200]}", style="white")
+            if len(post_text) > 200:
+                post_info.append("...", style="dim")
+            post_info.append(f"\n\n{post_url}", style="blue underline")
+
+            self.console.print(Panel(post_info, border_style="green", padding=(1, 2)))
+
+            # Ask if user wants to add this post
+            add = Confirm.ask("Add this post to your database?", default=False)
+
+            if add:
+                # Check if user exists, if not add them
+                if not self.db.get_user(username):
+                    self.db.add_user(username, score=0)
+                    self.console.print(f"[green]✓ Added user: {username}[/green]")
+
+                # Add the post
+                if self.db.add_post(post_url, username, score=0):
+                    self.console.print(f"[green]✓ Post added to database![/green]")
+                else:
+                    self.console.print(f"[yellow]Post already in database.[/yellow]")
+
+            self.console.print()
+
+            # Ask if they want to continue browsing
+            if idx < len(response.feed):
+                continue_browsing = Confirm.ask("Continue browsing?", default=True)
+                if not continue_browsing:
+                    break
+
+        self.console.print("[bold cyan]Done browsing![/bold cyan]")
 
     def run(self) -> None:
         """Run the interactive viewer"""
