@@ -78,12 +78,37 @@ class BlueskyViewer:
 
     def browse_bluesky_posts(self) -> None:
         """Browse top posts from Bluesky and add them to the database"""
-        self.console.print("[cyan]Fetching top posts from Bluesky...[/cyan]")
+        self.console.print("\n[bold cyan]Browse Posts from Bluesky[/bold cyan]\n")
+        self.console.print("[yellow]Note: This feature requires a Bluesky account to access the API.[/yellow]")
+        self.console.print("[dim]Your credentials are only used for this session and are not stored.[/dim]\n")
+
+        # Ask if user wants to login
+        do_login = Confirm.ask("Do you have a Bluesky account and want to login?", default=True)
+
+        if not do_login:
+            self.console.print("\n[yellow]Browsing requires authentication.[/yellow]")
+            self.console.print("[dim]You can create a free account at https://bsky.app[/dim]")
+            return
+
+        # Get login credentials
+        handle = Prompt.ask("Enter your Bluesky handle (e.g., username.bsky.social)")
+        password = Prompt.ask("Enter your password", password=True)
+
+        self.console.print("\n[cyan]Connecting to Bluesky...[/cyan]")
 
         try:
             client = Client()
-            # Get posts from the "What's Hot" feed (popular posts)
-            response = client.app.bsky.feed.get_timeline(limit=20)
+            client.login(handle, password)
+            self.console.print("[green]✓ Logged in successfully![/green]\n")
+
+            # Use a popular feed generator URI for discovering posts
+            # This is the "What's Hot" feed that shows trending posts
+            feed_uri = "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot"
+
+            self.console.print("[cyan]Fetching top posts...[/cyan]")
+
+            # Get posts from the feed
+            response = client.app.bsky.feed.get_feed(params={'feed': feed_uri, 'limit': 20})
 
             if not response.feed:
                 self.console.print("[yellow]No posts found.[/yellow]")
@@ -149,8 +174,15 @@ class BlueskyViewer:
             self.console.print("[bold cyan]Done browsing![/bold cyan]")
 
         except Exception as e:
-            self.console.print(f"[red]Error fetching posts from Bluesky: {str(e)}[/red]")
-            self.console.print("[yellow]Note: Bluesky browsing works without authentication for public posts.[/yellow]")
+            error_msg = str(e)
+            self.console.print(f"\n[red]Error: {error_msg}[/red]")
+
+            if "401" in error_msg or "authentication" in error_msg.lower():
+                self.console.print("[yellow]Invalid credentials. Please check your handle and password.[/yellow]")
+            elif "403" in error_msg:
+                self.console.print("[yellow]Access denied. The API might have restrictions.[/yellow]")
+            else:
+                self.console.print("[yellow]Could not connect to Bluesky. Please try again later.[/yellow]")
 
     def run(self) -> None:
         """Run the interactive viewer"""
