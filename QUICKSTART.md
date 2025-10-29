@@ -12,14 +12,23 @@ python3 --version
 ## Installation
 
 1. **Install dependencies:**
+
+   **Easy way** (recommended):
+   ```bash
+   ./install.sh
+   ```
+
+   **Or manually:**
+   ```bash
+   python3 -m pip install -r requirements.txt --user
+   ```
+
+   **If you have a working pip3:**
    ```bash
    pip3 install -r requirements.txt
    ```
 
-   Or if pip is already Python 3:
-   ```bash
-   pip install -r requirements.txt
-   ```
+   **Note:** If `pip3` gives you errors about OpenSSL or AttributeError, use `python3 -m pip` instead. This is a common issue on some systems.
 
 2. **Run the example script** to see it in action:
    ```bash
@@ -73,9 +82,15 @@ View your saved data:
 - Your system's `python` command points to Python 2.7
 
 **"ModuleNotFoundError: No module named 'rich'" or "No module named 'atproto'"**
-- Run: `pip3 install -r requirements.txt`
-- Or: `pip install -r requirements.txt` (if pip is Python 3)
+- Run: `python3 -m pip install -r requirements.txt --user`
+- Or use the install script: `./install.sh`
 - This installs all required dependencies including rich, atproto, and others
+
+**"AttributeError: module 'lib' has no attribute 'X509_V_FLAG_NOTIFY_POLICY'" when running pip3**
+- Your system's pip3 is broken due to OpenSSL issues
+- Solution: Use `python3 -m pip` instead of `pip3`
+- Example: `python3 -m pip install -r requirements.txt --user`
+- Or just run: `./install.sh`
 
 **"ModuleNotFoundError: No module named '_cffi_backend'"**
 - Run: `pip3 install --ignore-installed cffi`
