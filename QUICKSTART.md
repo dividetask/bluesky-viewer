@@ -1,8 +1,22 @@
 # Quick Start Guide
 
+## Prerequisites
+
+**Python 3.7 or higher required** - This will NOT work with Python 2.x
+
+Check your Python version:
+```bash
+python3 --version
+```
+
 ## Installation
 
 1. **Install dependencies:**
+   ```bash
+   pip3 install -r requirements.txt
+   ```
+
+   Or if pip is already Python 3:
    ```bash
    pip install -r requirements.txt
    ```
@@ -21,6 +35,12 @@
    ```bash
    python3 main.py --db example_data.json
    ```
+
+**Alternative:** Make the script executable:
+```bash
+chmod +x main.py
+./main.py
+```
 
 ## First Steps
 
@@ -50,12 +70,21 @@ View top users:
 
 ## Troubleshooting
 
-**"ModuleNotFoundError: No module named 'rich'"**
-- Run: `pip install -r requirements.txt`
+**"SyntaxError: invalid syntax" at line with `print(f"Error: {e}", file=sys.stderr)`**
+- This means you're using Python 2.x instead of Python 3
+- Solution: Use `python3 main.py` instead of `python main.py`
+- Check your version: `python3 --version` (should be 3.7+)
+- Your system's `python` command points to Python 2.7
 
-**"SyntaxError: invalid syntax"**
-- Make sure you're using Python 3: `python3 main.py` (not `python main.py`)
-- Check version: `python3 --version` (should be 3.7+)
+**"ModuleNotFoundError: No module named 'rich'"**
+- Run: `pip3 install -r requirements.txt`
+- Or: `pip install -r requirements.txt` (if pip is Python 3)
+
+**How to check which Python you're using:**
+```bash
+python --version    # Might be Python 2.7
+python3 --version   # Should be Python 3.7+
+```
 
 ## Database Location
 

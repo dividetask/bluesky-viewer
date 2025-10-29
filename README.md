@@ -24,6 +24,10 @@ Each post entry contains:
 - `username`: Username of the post author
 - `score`: A numeric score associated with the post
 
+## Requirements
+
+- **Python 3.7 or higher** (NOT Python 2.x)
+
 ## Installation
 
 1. Clone the repository:
@@ -34,6 +38,8 @@ cd bluesky-viewer
 
 2. Install dependencies:
 ```bash
+pip3 install -r requirements.txt
+# Or if pip is already Python 3:
 pip install -r requirements.txt
 ```
 
@@ -43,20 +49,23 @@ pip install -r requirements.txt
 
 Run the viewer with default settings:
 ```bash
-python main.py
+python3 main.py
 ```
 
-Or make it executable:
+Or make it executable and run directly:
 ```bash
 chmod +x main.py
 ./main.py
 ```
 
+**Important:** If you see a syntax error, make sure you're using Python 3:
+- Use `python3` NOT `python` (if your system has Python 2.7 as default)
+
 ### Custom Database Path
 
 Specify a custom database file:
 ```bash
-python main.py --db /path/to/custom_database.json
+python3 main.py --db /path/to/custom_database.json
 ```
 
 ### Interactive Menu
@@ -80,7 +89,7 @@ Once running, you'll see an interactive menu with the following options:
 
 ```bash
 # Start the viewer
-python main.py
+python3 main.py
 
 # Select option 6 to add a user
 # Enter username: alice.bsky.social
@@ -134,9 +143,6 @@ bluesky-viewer/
 - **rich** (>= 13.7.0): Terminal formatting and UI components
 - **python-dateutil** (>= 2.8.2): Date handling utilities
 
-## Requirements
-
-- Python 3.7 or higher
 
 ## Development
 
