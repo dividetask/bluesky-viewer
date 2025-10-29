@@ -8,10 +8,12 @@ from typing import Optional
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
-from rich.prompt import Prompt, IntPrompt
+from rich.prompt import Prompt, IntPrompt, Confirm
 from rich import box
+from rich.text import Text
 from database import Database
 from models import User, Post
+from atproto import Client
 
 
 class BlueskyViewer:
@@ -28,16 +30,8 @@ class BlueskyViewer:
 
 [yellow]1.[/yellow] View All Users
 [yellow]2.[/yellow] View All Posts
-[yellow]3.[/yellow] View Top Users
-[yellow]4.[/yellow] View Top Posts
-[yellow]5.[/yellow] View Posts by User
-[yellow]6.[/yellow] Add User
-[yellow]7.[/yellow] Add Post
-[yellow]8.[/yellow] Update User Score
-[yellow]9.[/yellow] Update Post Score
-[yellow]10.[/yellow] Delete User
-[yellow]11.[/yellow] Delete Post
-[yellow]12.[/yellow] Exit
+[yellow]3.[/yellow] Browse Top Posts from Bluesky
+[yellow]4.[/yellow] Exit
 """
         self.console.print(Panel(menu_text, border_style="cyan"))
 
@@ -82,104 +76,81 @@ class BlueskyViewer:
         posts = self.db.get_all_posts()
         self.display_posts(posts, "All Posts")
 
-    def view_top_users(self) -> None:
-        """View top users by score"""
-        limit = IntPrompt.ask("How many top users to display?", default=10)
-        users = self.db.get_top_users(limit)
-        self.display_users(users, f"Top {limit} Users")
+    def browse_bluesky_posts(self) -> None:
+        """Browse top posts from Bluesky and add them to the database"""
+        self.console.print("[cyan]Fetching top posts from Bluesky...[/cyan]")
 
-    def view_top_posts(self) -> None:
-        """View top posts by score"""
-        limit = IntPrompt.ask("How many top posts to display?", default=10)
-        posts = self.db.get_top_posts(limit)
-        self.display_posts(posts, f"Top {limit} Posts")
+        try:
+            client = Client()
+            # Get posts from the "What's Hot" feed (popular posts)
+            response = client.app.bsky.feed.get_timeline(limit=20)
 
-    def view_posts_by_user(self) -> None:
-        """View posts by a specific user"""
-        username = Prompt.ask("Enter username")
-        posts = self.db.get_posts_by_user(username)
-        self.display_posts(posts, f"Posts by {username}")
+            if not response.feed:
+                self.console.print("[yellow]No posts found.[/yellow]")
+                return
 
-    def add_user(self) -> None:
-        """Add a new user"""
-        username = Prompt.ask("Enter username")
-        score = IntPrompt.ask("Enter initial score", default=0)
+            # Display posts
+            self.console.print(f"\n[bold green]Found {len(response.feed)} posts[/bold green]\n")
 
-        if self.db.add_user(username, score):
-            self.console.print(f"[green]✓ User '{username}' added successfully![/green]")
-        else:
-            self.console.print(f"[red]✗ User '{username}' already exists![/red]")
+            for idx, feed_view in enumerate(response.feed, 1):
+                post = feed_view.post
+                author = post.author
 
-    def add_post(self) -> None:
-        """Add a new post"""
-        link = Prompt.ask("Enter post link")
-        username = Prompt.ask("Enter username")
-        score = IntPrompt.ask("Enter initial score", default=0)
+                # Extract post data
+                username = author.handle
+                display_name = author.display_name or username
+                post_text = post.record.text if hasattr(post.record, 'text') else ""
+                post_uri = post.uri
 
-        if self.db.add_post(link, username, score):
-            self.console.print(f"[green]✓ Post added successfully![/green]")
-        else:
-            self.console.print(f"[red]✗ Post with this link already exists![/red]")
+                # Convert AT URI to web URL
+                # Format: at://did:plc:xxx/app.bsky.feed.post/yyy
+                parts = post_uri.split('/')
+                if len(parts) >= 4:
+                    post_id = parts[-1]
+                    post_url = f"https://bsky.app/profile/{username}/post/{post_id}"
+                else:
+                    post_url = post_uri
 
-    def update_user_score(self) -> None:
-        """Update a user's score"""
-        username = Prompt.ask("Enter username")
-        user = self.db.get_user(username)
+                # Create a nice display box for each post
+                post_info = Text()
+                post_info.append(f"#{idx} ", style="bold yellow")
+                post_info.append(f"{display_name}", style="bold cyan")
+                post_info.append(f" (@{username})\n", style="cyan")
+                post_info.append(f"{post_text[:200]}", style="white")
+                if len(post_text) > 200:
+                    post_info.append("...", style="dim")
+                post_info.append(f"\n\n{post_url}", style="blue underline")
 
-        if not user:
-            self.console.print(f"[red]✗ User '{username}' not found![/red]")
-            return
+                self.console.print(Panel(post_info, border_style="green", padding=(1, 2)))
 
-        self.console.print(f"Current score: {user['score']}")
-        new_score = IntPrompt.ask("Enter new score")
+                # Ask if user wants to add this post
+                add = Confirm.ask("Add this post to your database?", default=False)
 
-        if self.db.update_user_score(username, new_score):
-            self.console.print(f"[green]✓ User score updated successfully![/green]")
-        else:
-            self.console.print(f"[red]✗ Failed to update user score![/red]")
+                if add:
+                    # Check if user exists, if not add them
+                    if not self.db.get_user(username):
+                        self.db.add_user(username, score=0)
+                        self.console.print(f"[green]✓ Added user: {username}[/green]")
 
-    def update_post_score(self) -> None:
-        """Update a post's score"""
-        link = Prompt.ask("Enter post link")
-        post = self.db.get_post_by_link(link)
+                    # Add the post
+                    if self.db.add_post(post_url, username, score=0):
+                        self.console.print(f"[green]✓ Post added to database![/green]")
+                    else:
+                        self.console.print(f"[yellow]Post already in database.[/yellow]")
 
-        if not post:
-            self.console.print(f"[red]✗ Post not found![/red]")
-            return
+                self.console.print()
 
-        self.console.print(f"Current score: {post['score']}")
-        new_score = IntPrompt.ask("Enter new score")
+                # Ask if they want to continue browsing
+                if idx < len(response.feed):
+                    continue_browsing = Confirm.ask("Continue browsing?", default=True)
+                    if not continue_browsing:
+                        break
 
-        if self.db.update_post_score(link, new_score):
-            self.console.print(f"[green]✓ Post score updated successfully![/green]")
-        else:
-            self.console.print(f"[red]✗ Failed to update post score![/red]")
+            self.console.print("[bold cyan]Done browsing![/bold cyan]")
 
-    def delete_user(self) -> None:
-        """Delete a user"""
-        username = Prompt.ask("Enter username to delete")
-        confirm = Prompt.ask(f"Are you sure you want to delete '{username}'? (yes/no)", default="no")
-
-        if confirm.lower() == "yes":
-            if self.db.delete_user(username):
-                self.console.print(f"[green]✓ User '{username}' deleted successfully![/green]")
-            else:
-                self.console.print(f"[red]✗ User '{username}' not found![/red]")
-        else:
-            self.console.print("[yellow]Deletion cancelled.[/yellow]")
-
-    def delete_post(self) -> None:
-        """Delete a post"""
-        link = Prompt.ask("Enter post link to delete")
-        confirm = Prompt.ask("Are you sure you want to delete this post? (yes/no)", default="no")
-
-        if confirm.lower() == "yes":
-            if self.db.delete_post(link):
-                self.console.print(f"[green]✓ Post deleted successfully![/green]")
-            else:
-                self.console.print(f"[red]✗ Post not found![/red]")
-        else:
-            self.console.print("[yellow]Deletion cancelled.[/yellow]")
+        except Exception as e:
+            self.console.print(f"[red]Error fetching posts from Bluesky: {str(e)}[/red]")
+            self.console.print("[yellow]Note: Bluesky browsing works without authentication for public posts.[/yellow]")
 
     def run(self) -> None:
         """Run the interactive viewer"""
@@ -188,31 +159,15 @@ class BlueskyViewer:
         while True:
             try:
                 self.show_menu()
-                choice = Prompt.ask("Select an option", default="12")
+                choice = Prompt.ask("Select an option", default="4")
 
                 if choice == "1":
                     self.view_all_users()
                 elif choice == "2":
                     self.view_all_posts()
                 elif choice == "3":
-                    self.view_top_users()
+                    self.browse_bluesky_posts()
                 elif choice == "4":
-                    self.view_top_posts()
-                elif choice == "5":
-                    self.view_posts_by_user()
-                elif choice == "6":
-                    self.add_user()
-                elif choice == "7":
-                    self.add_post()
-                elif choice == "8":
-                    self.update_user_score()
-                elif choice == "9":
-                    self.update_post_score()
-                elif choice == "10":
-                    self.delete_user()
-                elif choice == "11":
-                    self.delete_post()
-                elif choice == "12":
                     self.console.print("\n[bold cyan]Thank you for using Bluesky Terminal Viewer![/bold cyan]")
                     sys.exit(0)
                 else:
