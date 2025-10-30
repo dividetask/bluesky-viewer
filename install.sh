@@ -25,14 +25,25 @@ fi
 echo "Using: $PYTHON ($($PYTHON --version))"
 echo
 
-# Check if venv exists
+# Check if venv exists and has pip
 if [ -d "venv" ]; then
-    echo "Virtual environment already exists."
+    echo "Virtual environment found."
+    # Check if pip is installed in venv
+    if ! venv/bin/python3 -m pip --version &>/dev/null; then
+        echo "pip is missing in virtual environment, installing..."
+        NEEDS_PIP=true
+    else
+        echo "Virtual environment is ready."
+        NEEDS_PIP=false
+    fi
 else
     echo "Creating virtual environment..."
     $PYTHON -m venv venv --without-pip
+    NEEDS_PIP=true
+fi
 
-    # Try to install pip using ensurepip
+# Install pip if needed
+if [ "$NEEDS_PIP" = true ]; then
     echo "Bootstrapping pip..."
     if venv/bin/python3 -m ensurepip --upgrade 2>/dev/null; then
         echo "✓ pip installed via ensurepip"
